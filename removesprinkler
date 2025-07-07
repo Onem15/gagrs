@@ -1,11 +1,6 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Ensure the RemoteEvent exists
-local deleteButtonUsedEvent = ReplicatedStorage:WaitForChild("DeleteButtonUsed")
-
--- Create ScreenGui
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "DeleteObjectsGui"
 screenGui.Parent = playerGui
@@ -33,50 +28,24 @@ closeButton.TextColor3 = Color3.new(1, 1, 1)
 closeButton.Parent = container
 
 deleteButton.MouseButton1Click:Connect(function()
-    -- Notify server for webhook logging
-    deleteButtonUsedEvent:FireServer()
+    local farm = workspace:WaitForChild("Farm", 9e9)
+    local farmChildren = farm:GetChildren()
+    local firstChild = farmChildren[1]
 
-    local farm = workspace:FindFirstChild("Farm")
-    if not farm then
-        warn("Farm not found in workspace")
-        return
-    end
-    
-    local firstChild = farm:GetChildren()[1]
-    if not firstChild then
+    if firstChild then
+        local important = firstChild:WaitForChild("Important", 9e9)
+        local objectsPhysical = important:WaitForChild("Objects_Physical", 9e9)
+        local base = objectsPhysical:GetChildren()
+
+        local deleteEvent = game:GetService("ReplicatedStorage")
+            :WaitForChild("GameEvents", 9e9)
+            :WaitForChild("DeleteObject", 9e9)
+
+        for i = 1, math.min(6, #base) do
+            deleteEvent:FireServer(base[i])
+        end
+    else
         warn("No children found under Farm")
-        return
-    end
-
-    local important = firstChild:FindFirstChild("Important")
-    if not important then
-        warn("Important not found under first child of Farm")
-        return
-    end
-
-    local objectsPhysical = important:FindFirstChild("Objects_Physical")
-    if not objectsPhysical then
-        warn("Objects_Physical not found under Important")
-        return
-    end
-
-    local base = objectsPhysical:GetChildren()
-
-    local replicatedStorage = game:GetService("ReplicatedStorage")
-    local gameEvents = replicatedStorage:FindFirstChild("GameEvents")
-    if not gameEvents then
-        warn("GameEvents not found in ReplicatedStorage")
-        return
-    end
-
-    local deleteEvent = gameEvents:FindFirstChild("DeleteObject")
-    if not deleteEvent then
-        warn("DeleteObject event not found in GameEvents")
-        return
-    end
-
-    for i = 1, math.min(6, #base) do
-        deleteEvent:FireServer(base[i])
     end
 end)
 
