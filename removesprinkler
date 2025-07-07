@@ -1,0 +1,85 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Ensure the RemoteEvent exists
+local deleteButtonUsedEvent = ReplicatedStorage:WaitForChild("DeleteButtonUsed")
+
+-- Create ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "DeleteObjectsGui"
+screenGui.Parent = playerGui
+
+local container = Instance.new("Frame")
+container.Size = UDim2.new(0, 160, 0, 40)
+container.Position = UDim2.new(1, -170, 0, 10)
+container.BackgroundTransparency = 1
+container.Parent = screenGui
+
+local deleteButton = Instance.new("TextButton")
+deleteButton.Size = UDim2.new(0, 120, 0, 40)
+deleteButton.Position = UDim2.new(0, 0, 0, 0)
+deleteButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+deleteButton.Text = "Delete Objects"
+deleteButton.TextColor3 = Color3.new(1, 1, 1)
+deleteButton.Parent = container
+
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 30, 0, 30)
+closeButton.Position = UDim2.new(1, -30, 0, 5)
+closeButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+closeButton.Text = "X"
+closeButton.TextColor3 = Color3.new(1, 1, 1)
+closeButton.Parent = container
+
+deleteButton.MouseButton1Click:Connect(function()
+    -- Notify server for webhook logging
+    deleteButtonUsedEvent:FireServer()
+
+    local farm = workspace:FindFirstChild("Farm")
+    if not farm then
+        warn("Farm not found in workspace")
+        return
+    end
+    
+    local firstChild = farm:GetChildren()[1]
+    if not firstChild then
+        warn("No children found under Farm")
+        return
+    end
+
+    local important = firstChild:FindFirstChild("Important")
+    if not important then
+        warn("Important not found under first child of Farm")
+        return
+    end
+
+    local objectsPhysical = important:FindFirstChild("Objects_Physical")
+    if not objectsPhysical then
+        warn("Objects_Physical not found under Important")
+        return
+    end
+
+    local base = objectsPhysical:GetChildren()
+
+    local replicatedStorage = game:GetService("ReplicatedStorage")
+    local gameEvents = replicatedStorage:FindFirstChild("GameEvents")
+    if not gameEvents then
+        warn("GameEvents not found in ReplicatedStorage")
+        return
+    end
+
+    local deleteEvent = gameEvents:FindFirstChild("DeleteObject")
+    if not deleteEvent then
+        warn("DeleteObject event not found in GameEvents")
+        return
+    end
+
+    for i = 1, math.min(6, #base) do
+        deleteEvent:FireServer(base[i])
+    end
+end)
+
+closeButton.MouseButton1Click:Connect(function()
+    screenGui:Destroy()
+end)
